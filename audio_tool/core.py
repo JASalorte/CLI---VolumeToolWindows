@@ -30,7 +30,6 @@ def get_sessions():
     """Retrieve all current audio sessions."""
     return AudioUtilities.GetAllSessions()
 
-
 def list_sessions() -> List[SessionInfo]:
     """
     Returns:
@@ -53,7 +52,6 @@ def list_sessions() -> List[SessionInfo]:
 
         results.append(SessionInfo(pos=idx, name=name, volume=volume))
     return results
-
 
 def list_sessions_verbose(list_pos: bool = False) -> List[Tuple[str, SessionInfo]]:
     """
