@@ -8,10 +8,14 @@ from audio_tool import core, VolumeResult, set_volume_by_name, get_volume_by_nam
 from audio_tool.core import VolumeError
 
 @pytest.fixture
-def discord_session(mocker):
-    def _make():
+def mock_session(mocker):
+    def _make(app_name="Discord.exe"):
         s = mocker.MagicMock()
-        s.Process.name.return_value = "Discord.exe"
+        if app_name is not None:
+            s.Process = mocker.MagicMock()
+            s.Process.name.return_value = app_name
+        else:
+            s.Process = None    # for System sounds case
         return s
     return _make
 
@@ -372,12 +376,18 @@ def test__normalize_volume_invalid_inputs():
 #endregion
 
 #region Test set_volume_by_name
-def test_set_volume_by_name_calls_helpers(mocker, discord_session):
+def test_set_volume_by_name_calls_helpers(mocker, mock_session):
     mock_norm = mocker.patch("audio_tool.core._normalize_volume", return_value=0.3)
 
     # Use fixture twice
-    fake_session1 = discord_session()
-    fake_session2 = discord_session()
+    fake_session1 = mock_session()
+    fake_session2 = mock_session()
+
+    mock_interface1 = fake_session1._ctl.QueryInterface.return_value
+    mock_interface1.SetMasterVolume.return_value = None
+
+    mock_interface2 = fake_session2._ctl.QueryInterface.return_value
+    mock_interface2.SetMasterVolume.return_value = None
 
     mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session1, fake_session2])
 
@@ -391,9 +401,9 @@ def test_set_volume_by_name_calls_helpers(mocker, discord_session):
     assert result_multiple[1] == VolumeResult(volume=0.3, name="Discord.exe")
 
     # --- all_matches=False (only one updated) ---
-    # result_single = set_volume_by_name("discord.exe", 30, False)
-    # assert len(result_single) == 1
-    # assert result_single[0].name == "Discord.exe"
+    result_single = set_volume_by_name("discord.exe", 30, False)
+    assert len(result_single) == 1
+    assert result_single[0].name == "Discord.exe"
 
 @pytest.mark.parametrize(
     "input_app, input_volume, expected",
@@ -416,9 +426,9 @@ def test_set_volume_by_name_calls_helpers(mocker, discord_session):
         "App_not_found",
     ]
 )
-def test_set_volume_by_name_inputs_param(mocker, input_app, input_volume, expected):
-    fake_session = mocker.MagicMock()
-    fake_session.Process.name.return_value = "Discord.exe"
+def test_set_volume_by_name_inputs_param(mocker, input_app, input_volume, expected, mock_session):
+    fake_session = mock_session()
+
 
     mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
 
@@ -427,6 +437,31 @@ def test_set_volume_by_name_inputs_param(mocker, input_app, input_volume, expect
     assert result[0].name == expected[0].name
     assert result[0].volume == pytest.approx(expected[0].volume)
     assert result[0].error == expected[0].error
+
+@pytest.mark.parametrize(
+    "app_name, query_name, expected_name",
+    [
+        ("Discord.exe", "discord.exe", "Discord.exe"),      # normal case-insensitive
+        ("Spotify.exe", "spotify.exe", "Spotify.exe"),      # another app
+        (None, "system sounds", "System sounds"),           # system sounds
+    ],
+    ids=["discord", "spotify", "system_sounds"]
+)
+def test_set_volume_by_name_parametrized(mocker, mock_session, app_name, query_name, expected_name):
+    fake_session = mock_session(app_name)
+    mock_interface = fake_session._ctl.QueryInterface.return_value
+    mock_interface.SetMasterVolume.return_value = None
+
+    mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+
+    result = set_volume_by_name(query_name, 53, False)
+
+    assert len(result) == 1
+    assert result[0].name == expected_name
+    if app_name is not None:
+        fake_session.Process.name.assert_called()                       # verify name was actually accessed
+    mock_interface.SetMasterVolume.assert_called_once_with(0.53, None)   # normalized value
+
 #endregion
 
 #region Tests list_sessions
