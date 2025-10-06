@@ -7,6 +7,12 @@ from _ctypes import COMError
 from audio_tool import core, VolumeResult, set_volume_by_name, get_volume_by_name
 from audio_tool.core import VolumeError
 
+@pytest.fixture
+def discord_session(mocker):
+    s = mocker.MagicMock()
+    s.Process.name.return_value = "Discord.exe"
+    return s
+
 # region Setup mocks
 # Standard mock sessions result
 fake_sessions_standard = [
@@ -53,13 +59,13 @@ def test_get_volume_by_name_input_validation(mocker):
 
     mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
 
-    assert get_volume_by_name("discord.exe") == VolumeResult(volume=0.5,name='Discord.exe',error=None)
-    assert get_volume_by_name(None) == VolumeResult(volume=None, name=None, error=VolumeError.NOT_FOUND)
-    assert get_volume_by_name(0.5) == VolumeResult(volume=None, name=None, error=VolumeError.NOT_FOUND)
-    assert get_volume_by_name(-59) == VolumeResult(volume=None, name=None, error=VolumeError.NOT_FOUND)
-    assert get_volume_by_name([]) == VolumeResult(volume=None, name=None, error=VolumeError.NOT_FOUND)
-    assert get_volume_by_name({}) == VolumeResult(volume=None, name=None, error=VolumeError.NOT_FOUND)
-    assert get_volume_by_name(False) == VolumeResult(volume=None, name=None, error=VolumeError.NOT_FOUND)
+    assert get_volume_by_name("discord.exe") == [VolumeResult(volume=0.5,name='Discord.exe',error=None)]
+    assert get_volume_by_name(None) == [VolumeResult(volume=None, name=None, error=VolumeError.INVALID_INPUT)]
+    assert get_volume_by_name(0.5) == [VolumeResult(volume=None, name=None, error=VolumeError.INVALID_INPUT)]
+    assert get_volume_by_name(-59) == [VolumeResult(volume=None, name=None, error=VolumeError.INVALID_INPUT)]
+    assert get_volume_by_name([]) == [VolumeResult(volume=None, name=None, error=VolumeError.INVALID_INPUT)]
+    assert get_volume_by_name({}) == [VolumeResult(volume=None, name=None, error=VolumeError.INVALID_INPUT)]
+    assert get_volume_by_name(False) == [VolumeResult(volume=None, name=None, error=VolumeError.INVALID_INPUT)]
 
 def test_get_volume_by_name_system_sounds_success(mocker):
     fake_session = mocker.MagicMock()
@@ -76,7 +82,7 @@ def test_get_volume_by_name_system_sounds_success(mocker):
     mock_interface.GetMasterVolume.assert_called_once_with()
 
     # Compare result with expected
-    assert result == core.VolumeResult(volume=0.5, name="System sounds", error=None)
+    assert result == [core.VolumeResult(volume=0.5, name="System sounds", error=None)]
 
 def test_get_volume_by_name_system_sounds_com_error(mocker):
     fake_session = mocker.MagicMock()
@@ -93,7 +99,7 @@ def test_get_volume_by_name_system_sounds_com_error(mocker):
     mock_interface.GetMasterVolume.assert_called_once_with()
 
     # Compare result with expected
-    assert result == core.VolumeResult(volume=None, name="System sounds", error=core.VolumeError.FAILED)
+    assert result == [core.VolumeResult(volume=None, name="System sounds", error=core.VolumeError.FAILED)]
 
 def test_get_volume_by_name_multiple_matches(mocker):
     fake_session1 = mocker.MagicMock()
@@ -108,8 +114,9 @@ def test_get_volume_by_name_multiple_matches(mocker):
 
     result = core.get_volume_by_name("Discord.exe")
 
-    # By current implementation: first one wins
-    assert result == core.VolumeResult(volume=0.3, name="Discord.exe", error=None)
+    # Both matches are returned in order
+    assert result[0] == core.VolumeResult(volume=0.3, name="Discord.exe", error=None)
+    assert result[1] == core.VolumeResult(volume=0.8, name="Discord.exe", error=None)
 
 
 @pytest.mark.parametrize(
@@ -119,28 +126,28 @@ def test_get_volume_by_name_multiple_matches(mocker):
         (
             "Discord.exe",
             "Discord.exe",
-            core.VolumeResult(volume=0.65, name="Discord.exe", error=None)
+            [core.VolumeResult(volume=0.65, name="Discord.exe", error=None)]
         ),
         (
             "Discord.exe",
             "discord.exe",
-            core.VolumeResult(volume=0.65, name="Discord.exe", error=None)
+            [core.VolumeResult(volume=0.65, name="Discord.exe", error=None)]
         ),
         (
             "Discord.exe",
             "DISCORD.EXE",
-            core.VolumeResult(volume=0.65, name="Discord.exe", error=None)
+            [core.VolumeResult(volume=0.65, name="Discord.exe", error=None)]
         ),
         (
             "Discord.exe",
             "DiScOrD.EXE",
-            core.VolumeResult(volume=0.65, name="Discord.exe", error=None)
+            [core.VolumeResult(volume=0.65, name="Discord.exe", error=None)]
         ),
         # Not found path: no session matches query
         (
             "Spotify.exe",
             "Discord.exe",
-            core.VolumeResult(volume=None, name="Discord.exe", error=core.VolumeError.NOT_FOUND)
+            [core.VolumeResult(volume=None, name="Discord.exe", error=core.VolumeError.NOT_FOUND)]
         ),
     ],
     ids=[
@@ -175,7 +182,7 @@ def test_get_volume_by_name_app_comerror(mocker):
 
     result = core.get_volume_by_name("Discord.exe")
 
-    assert result == core.VolumeResult(volume=None, name="Discord.exe", error=core.VolumeError.FAILED)
+    assert result == [core.VolumeResult(volume=None, name="Discord.exe", error=core.VolumeError.FAILED)]
 
 def test_get_volume_by_name_process_name_none(mocker):
     fake_session = mocker.MagicMock()
@@ -184,7 +191,8 @@ def test_get_volume_by_name_process_name_none(mocker):
 
     result = core.get_volume_by_name("Discord.exe")
 
-    assert result.error == core.VolumeError.NOT_FOUND
+    assert len(result) == 1
+    assert result[0].error == core.VolumeError.NOT_FOUND
 #endregion
 
 #region Tests _set_volume_by_name
@@ -194,13 +202,13 @@ def test_get_volume_by_name_process_name_none(mocker):
         # Success path: no error, should return VolumeResult with volume=0.5
         (
             None,
-            core.VolumeResult(volume=0.5, name="System sounds", error=None)
+            [core.VolumeResult(volume=0.5, name="System sounds", error=None)]
         ),
 
         # Failure path: COMError raised, should return FAILED
         (
             COMError(42, "Unspecified error", None),
-            core.VolumeResult(volume=None, name="System sounds", error=core.VolumeError.FAILED),
+            [core.VolumeResult(volume=None, name="System sounds", error=core.VolumeError.FAILED)],
         ),
 
     ],
@@ -234,42 +242,42 @@ def test__set_volume_by_name_system_sounds_cases(mocker, side_effect, expected_r
                 "Discord.exe",
                 "Discord.exe",
                 None,
-                core.VolumeResult(volume=0.8, name="Discord.exe", error=None),
+                [core.VolumeResult(volume=0.8, name="Discord.exe", error=None)],
         ),
         # Case-insensitive random match → success
         (
                 "dIsCoRd.ExE",
                 "Discord.exe",
                 None,
-                core.VolumeResult(volume=0.8, name="Discord.exe", error=None),
+                [core.VolumeResult(volume=0.8, name="Discord.exe", error=None)],
         ),
         # Case-insensitive lowercase match → success
         (
                 "discord.exe",
                 "Discord.exe",
                 None,
-                core.VolumeResult(volume=0.8, name="Discord.exe", error=None),
+                [core.VolumeResult(volume=0.8, name="Discord.exe", error=None)],
         ),
         # Case-insensitive uppercase match → success
         (
                 "DISCORD.EXE",
                 "Discord.exe",
                 None,
-                core.VolumeResult(volume=0.8, name="Discord.exe", error=None),
+                [core.VolumeResult(volume=0.8, name="Discord.exe", error=None)],
         ),
         # No match at all → NOT_FOUND
         (
                 "Spotify.exe",
                 "Discord.exe",
                 None,
-                core.VolumeResult(volume=None, name="Spotify.exe", error=core.VolumeError.NOT_FOUND),
+                [core.VolumeResult(volume=None, name="Spotify.exe", error=core.VolumeError.NOT_FOUND)],
         ),
         # Match, but COMError → FAILED
         (
                 "Discord.exe",
                 "Discord.exe",
                 COMError(42, "Unspecified error", None),
-                core.VolumeResult(volume=None, name="Discord.exe", error=core.VolumeError.FAILED),
+                [core.VolumeResult(volume=None, name="Discord.exe", error=core.VolumeError.FAILED)],
         ),
     ],
     ids=[
@@ -292,7 +300,7 @@ def test__set_volume_by_name_app_cases(mocker, search_name, session_name, side_e
 
     result = core.set_volume_by_name(search_name, 0.8)
 
-    if side_effect is None and expected_result.error is None:
+    if side_effect is None and expected_result[0].error is None:
         # Only assert call if success was expected
         mock_interface.SetMasterVolume.assert_called_once_with(0.8, None)
 
@@ -305,7 +313,32 @@ def test_set_volume_by_name_process_name_none(mocker):
 
     result = core.set_volume_by_name("Discord.exe",0.5)
 
-    assert result.error == core.VolumeError.NOT_FOUND
+    assert len(result) == 1
+    assert result[0].error == core.VolumeError.NOT_FOUND
+
+def test_set_volume_by_name_multiple_matches(mocker):
+    # Create two independent fake sessions
+    fake_session1 = mocker.MagicMock()
+    fake_session1.Process.name.return_value = "Discord.exe"
+    mock_interface1 = fake_session1._ctl.QueryInterface.return_value
+
+    fake_session2 = mocker.MagicMock()
+    fake_session2.Process.name.return_value = "Discord.exe"
+    mock_interface2 = fake_session2._ctl.QueryInterface.return_value
+
+    # Patch get_sessions to return both
+    mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session1, fake_session2])
+
+    result = core.set_volume_by_name("Discord.exe", 0.5, True)
+
+    # Verify both sessions were updated
+    mock_interface1.SetMasterVolume.assert_called_once_with(0.5, None)
+    mock_interface2.SetMasterVolume.assert_called_once_with(0.5, None)
+
+    # By current implementation: first one wins
+    assert len(result) == 2
+    assert result[0] == core.VolumeResult(volume=0.5, name="Discord.exe", error=None)
+    assert result[1] == core.VolumeResult(volume=0.5, name="Discord.exe", error=None)
 #endregion
 
 #region Tests _normalize_volume
@@ -336,29 +369,39 @@ def test__normalize_volume_invalid_inputs():
 #endregion
 
 #region Test set_volume_by_name
-#Simple “helper orchestration” test, no really that useful
-def test_set_volume_by_name_calls_helpers(mocker):
-    mock_norm = mocker.patch("audio_tool.core._normalize_volume", return_value=0.5)
+def test_set_volume_by_name_calls_helpers(mocker, discord_session):
+    mock_norm = mocker.patch("audio_tool.core._normalize_volume", return_value=0.3)
 
-    fake_result = VolumeResult(name="Discord.exe",volume=0.5)
-    mock_set = mocker.patch("audio_tool.core._set_volume_by_name", return_value=fake_result)
+    # Use fixture twice
+    fake_session1 = discord_session
+    fake_session2 = discord_session
 
-    result = set_volume_by_name("discord.exe", 50)
+    mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session1, fake_session2])
 
-    mock_norm.assert_called_once_with(50)
-    mock_set.assert_called_once_with("discord.exe", 0.5)
-    assert result == fake_result
+    # --- all_matches=True (both sessions updated) ---
+    result_multiple = set_volume_by_name("discord.exe", 30, True)
+
+    mock_norm.assert_called_with(30)
+    fake_session1._ctl.QueryInterface.return_value.SetMasterVolume.assert_called_once_with(0.3, None)
+    fake_session2._ctl.QueryInterface.return_value.SetMasterVolume.assert_called_once_with(0.3, None)
+    assert result_multiple[0] == VolumeResult(volume=0.3, name="Discord.exe")
+    assert result_multiple[1] == VolumeResult(volume=0.3, name="Discord.exe")
+
+    # --- all_matches=False (only one updated) ---
+    result_single = set_volume_by_name("discord.exe", 30, False)
+    assert len(result_single) == 1
+    assert result_single[0].name == "Discord.exe"
 
 @pytest.mark.parametrize(
     "input_app, input_volume, expected",
     [
-        ("Discord.exe", 0.5, VolumeResult(name="Discord.exe", volume=0.5)),
-        ("Discord.exe", 50, VolumeResult(name="Discord.exe", volume=0.5)),
-        ("Discord.exe", 150, VolumeResult(name="Discord.exe", volume=1.0)),
-        ("Discord.exe", -23.7, VolumeResult(name="Discord.exe", volume=0.0)),
-        ("Discord.exe", None, VolumeResult(name="Discord.exe", error=VolumeError.INVALID_INPUT)),
-        ("Discord.exe", True, VolumeResult(name="Discord.exe", error=VolumeError.INVALID_INPUT)),
-        ("Spotify.exe", 0.5, VolumeResult(name="Spotify.exe", error=VolumeError.NOT_FOUND)),
+        ("Discord.exe", 0.5, [VolumeResult(name="Discord.exe", volume=0.5)]),
+        ("Discord.exe", 50, [VolumeResult(name="Discord.exe", volume=0.5)]),
+        ("Discord.exe", 150, [VolumeResult(name="Discord.exe", volume=1.0)]),
+        ("Discord.exe", -23.7, [VolumeResult(name="Discord.exe", volume=0.0)]),
+        ("Discord.exe", None, [VolumeResult(name="Discord.exe", error=VolumeError.INVALID_INPUT)]),
+        ("Discord.exe", True, [VolumeResult(name="Discord.exe", error=VolumeError.INVALID_INPUT)]),
+        ("Spotify.exe", 0.5, [VolumeResult(name="Spotify.exe", error=VolumeError.NOT_FOUND)]),
     ],
     ids=[
         "exact_success",
@@ -376,12 +419,11 @@ def test_set_volume_by_name_inputs_param(mocker, input_app, input_volume, expect
 
     mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
 
-
     result = set_volume_by_name(input_app, input_volume)
 
-    assert result.name == expected.name
-    assert result.volume == pytest.approx(expected.volume)
-    assert result.error == expected.error
+    assert result[0].name == expected[0].name
+    assert result[0].volume == pytest.approx(expected[0].volume)
+    assert result[0].error == expected[0].error
 #endregion
 
 #region Tests list_sessions
@@ -436,4 +478,6 @@ def test_list_sessions_unexpected(mocker):
     assert result[3][0] == "3 - Chrome: 56.00"
     assert result[4][0] == "4 - Steam: N/A" # empty volume preserved
     assert result[5][0] == "5 - N/A: N/A"   # empty name preserved
+    assert result[5][1].name == ""
+    assert result[5][1].volume is None
 #endregion

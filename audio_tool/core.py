@@ -77,50 +77,90 @@ def list_sessions_verbose(list_pos: bool = False) -> List[Tuple[str, SessionInfo
     return results_formatted
 
 
-def get_volume_by_name(app_name: str) -> VolumeResult:
-    """Return the volume of an app by name."""
-    sessions = get_sessions()
-    for session in sessions:
-        if session.Process and session.Process.name().lower() == app_name.lower():
-            try:
-                volume = session._ctl.QueryInterface(ISimpleAudioVolume).GetMasterVolume()
-                return VolumeResult(volume=volume, name=app_name)
-            except COMError:
-                return VolumeResult(error=VolumeError.FAILED)
-    return VolumeResult(error=VolumeError.NOT_FOUND)
+def get_volume_by_name(app_name: str) -> List[VolumeResult]:
+    """
+    Return the volume(s) of an app by name.
 
-def set_volume_by_name(app_name: str, volume: float | int | str) -> VolumeResult:
-    """Set the volume of an app by process name."""
+    Always returns a list:
+    - If multiple matches exist, returns one VolumeResult per session.
+    - If none found, returns a single VolumeResult with NOT_FOUND error.
+    """
+
+    if not isinstance(app_name, str):
+        return [VolumeResult(error=VolumeError.INVALID_INPUT)]
+
+    sessions = get_sessions()
+    selected = []
+    for session in sessions:
+        proc_name = session.Process.name() if session.Process else None
+        if proc_name and proc_name.lower() == app_name.lower():
+            selected.append((session,proc_name))
+        elif not session.Process and "system sounds" == app_name.lower():
+            selected.append((session, "System sounds"))
+
+    if not selected:
+        return [VolumeResult(name=app_name, error=VolumeError.NOT_FOUND)]
+
+    results = []
+    for selected_session, resolved_name in selected:
+        try:
+            volume = selected_session._ctl.QueryInterface(ISimpleAudioVolume).GetMasterVolume()
+            results.append(VolumeResult(volume=volume, name=resolved_name))
+        except COMError:
+            results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
+
+    return results
+
+def set_volume_by_name(app_name: str, volume: float | int | str, all_matches: bool = True) -> List[VolumeResult]:
+    """
+    Set the volume of an app by process name.
+
+    Args:
+        app_name: Name of the app to change its name
+        volume: The desired volume
+        all_matches: Change the volume for all matches found, if False, only the first found (which is kinda useless?)
+    Returns:
+        List of VolumeResult with the results of the operation
+    """
     volume = _normalize_volume(volume)
     if volume is None:
-        return VolumeResult(name=app_name, error=VolumeError.INVALID_INPUT)
+        return [VolumeResult(name=app_name, error=VolumeError.INVALID_INPUT)]
 
-    return _set_volume_by_name(app_name, volume)
+    return _set_volume_by_name(app_name, volume, all_matches)
 
-
-
-def _set_volume_by_name(app_name: str, volume: float) -> VolumeResult:
+def _set_volume_by_name(app_name: str, volume: float, all_matches: bool) -> List[VolumeResult]:
+    """Set volume(s) by name. Returns a list of VolumeResult, one per matching session."""
+    if not isinstance(app_name, str):
+        try:
+            failed_app_name = str(app_name)
+        except Exception:
+            failed_app_name = "Undefined"
+        return [VolumeResult(name=failed_app_name, error=VolumeError.INVALID_INPUT)]
 
     sessions = get_sessions()
-    selected = None
+    selected = []
 
     for session in sessions:
-        if session.Process:
-            if session.Process.name().lower() == app_name.lower():
-                selected = session
-        else:
-            if app_name.lower() == "system sounds":
-                selected = session
+        proc_name = session.Process.name() if session.Process else None
+        if proc_name and proc_name.lower() == app_name.lower():
+                selected.append((session, proc_name))
+        elif not session.Process and app_name.lower() == "system sounds":
+                selected.append((session, "System sounds"))
+
+        if selected and not all_matches:
+            break
 
     if selected:
-        name = selected.Process.name() if selected.Process else "System sounds"
-        try:
-            selected._ctl.QueryInterface(ISimpleAudioVolume).SetMasterVolume(volume, None)
-            return VolumeResult(volume=volume, name=name)
-        except COMError:
-            return VolumeResult(name=name, error=VolumeError.FAILED)  # Failed to set new volume
+        results = []
+        for selected_session, resolved_name in selected:
+            try:
+                selected_session._ctl.QueryInterface(ISimpleAudioVolume).SetMasterVolume(volume, None)
+                results.append(VolumeResult(volume=volume, name=resolved_name))
+            except COMError:
+                results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
+        return results
 
-    return VolumeResult(name=app_name, error=VolumeError.NOT_FOUND)  # Application not found
+    return [VolumeResult(name=app_name, error=VolumeError.NOT_FOUND)]  # Application not found
 
 
 def interactive_set_volume() -> VolumeResult:
