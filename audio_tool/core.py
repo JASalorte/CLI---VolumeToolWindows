@@ -76,6 +76,7 @@ def list_sessions_verbose(list_pos: bool = False) -> List[Tuple[str, SessionInfo
     return results_formatted
 
 
+
 def get_volume_by_name(app_name: str) -> List[VolumeResult]:
     """
     Return the volume(s) of an app by name.
@@ -84,9 +85,11 @@ def get_volume_by_name(app_name: str) -> List[VolumeResult]:
     - If multiple matches exist, returns one VolumeResult per session.
     - If none found, returns a single VolumeResult with NOT_FOUND error.
     """
+    parsed = _string_parse(app_name)
+    if parsed is None:
+        return [VolumeResult(name=str(app_name), error=VolumeError.INVALID_INPUT)]
 
-    if not isinstance(app_name, str):
-        return [VolumeResult(error=VolumeError.INVALID_INPUT)]
+    app_name = parsed
 
     sessions = get_sessions()
     selected = []
@@ -131,12 +134,11 @@ def set_volume_by_name(app_name: str, volume: float | int | str, all_matches: bo
 
 def _set_volume_by_name(app_name: str, volume: float, all_matches: bool) -> List[VolumeResult]:
     """Set volume(s) by name. Returns a list of VolumeResult, one per matching session."""
-    if not isinstance(app_name, str):
-        try:
-            failed_app_name = str(app_name)
-        except Exception:
-            failed_app_name = "Undefined"
-        return [VolumeResult(name=failed_app_name, error=VolumeError.INVALID_INPUT)]
+    parsed = _string_parse(app_name)
+    if parsed is None:
+        return [VolumeResult(name=str(app_name), error=VolumeError.INVALID_INPUT)]
+
+    app_name = parsed
 
     sessions = get_sessions()
     selected = []
@@ -231,18 +233,25 @@ def _normalize_volume(volume: str | float | int) -> Optional[float]:
 
     return None
 
+def _string_parse(value: str) -> str | None:
+    if not isinstance(value, str):
+        return None
+
+    stripped = value.strip()
+    return stripped if stripped else None
 
 def toggle_volume(app_name: str) -> List[VolumeResult]:
+    """
+    If there are multiple sessions and just one of them is unmuted, all will be muted.
+    If all are muted, all will be unmuted.
+    """
+    parsed = _string_parse(app_name)
+    if parsed is None:
+        return [VolumeResult(name=str(app_name), error=VolumeError.INVALID_INPUT)]
+
+    app_name = parsed
+
     sessions = get_sessions()
-
-
-
-    if not isinstance(app_name, str):
-        try:
-            failed_app_name = str(app_name)
-        except Exception:
-            failed_app_name = "Undefined"
-        return [VolumeResult(name=failed_app_name, error=VolumeError.INVALID_INPUT)]
 
     selected = []
     for session in sessions:
@@ -255,12 +264,14 @@ def toggle_volume(app_name: str) -> List[VolumeResult]:
     if not selected:
         return [VolumeResult(name=app_name, error=VolumeError.NOT_FOUND)]
 
+    # Determine the new global mute state
+    interfaces = [s.SimpleAudioVolume for s, _ in selected]
+    any_unmuted = any(not i.GetMute() for i in interfaces)
+    new_mute = 1 if any_unmuted else 0  # if any is unmuted, mute all
+
     results = []
-    for session, resolved_name in selected:
-        interface = session.SimpleAudioVolume
+    for (session, resolved_name), interface in zip(selected, interfaces):
         try:
-            mute = interface.GetMute()
-            new_mute = 1 if mute == 0 else 0
             interface.SetMute(new_mute, None)
             results.append(VolumeResult(name=resolved_name, muted=bool(new_mute)))
         except COMError:

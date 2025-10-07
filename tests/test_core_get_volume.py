@@ -19,12 +19,12 @@ class TestGetVolumeByName:
         mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
 
         assert get_volume_by_name("discord.exe") == [VolumeResult(volume=0.5,muted=False,name='Discord.exe')]
-        assert get_volume_by_name(None) == [VolumeResult(error=VolumeError.INVALID_INPUT)]
-        assert get_volume_by_name(0.5) == [VolumeResult(error=VolumeError.INVALID_INPUT)]
-        assert get_volume_by_name(-59) == [VolumeResult(error=VolumeError.INVALID_INPUT)]
-        assert get_volume_by_name([]) == [VolumeResult(error=VolumeError.INVALID_INPUT)]
-        assert get_volume_by_name({}) == [VolumeResult(error=VolumeError.INVALID_INPUT)]
-        assert get_volume_by_name(False) == [VolumeResult(error=VolumeError.INVALID_INPUT)]
+        assert get_volume_by_name(None) == [VolumeResult(error=VolumeError.INVALID_INPUT, name="None")]
+        assert get_volume_by_name(0.5) == [VolumeResult(error=VolumeError.INVALID_INPUT, name="0.5")]
+        assert get_volume_by_name(-59) == [VolumeResult(error=VolumeError.INVALID_INPUT, name="-59")]
+        assert get_volume_by_name([]) == [VolumeResult(error=VolumeError.INVALID_INPUT, name="[]")]
+        assert get_volume_by_name({}) == [VolumeResult(error=VolumeError.INVALID_INPUT, name="{}")]
+        assert get_volume_by_name(False) == [VolumeResult(error=VolumeError.INVALID_INPUT, name="False")]
 
     def test_get_volume_by_name_system_sounds_success(self, mocker):
         fake_session = mocker.MagicMock()
