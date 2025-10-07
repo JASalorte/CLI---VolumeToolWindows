@@ -4,6 +4,8 @@ from typing import List, Optional, Tuple
 from comtypes import COMError
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 
+from audio_tool.utils import _string_parse, _normalize_volume
+
 
 class VolumeError(Enum):
     NOT_FOUND = "Application not found"
@@ -24,6 +26,7 @@ class VolumeResult:
 class SessionInfo:
     pos: int
     name: str
+    muted: bool
     volume: Optional[float]
 
 
@@ -48,10 +51,12 @@ def list_sessions() -> List[SessionInfo]:
 
         try:
             volume = session.SimpleAudioVolume.GetMasterVolume()
+            muted = session.SimpleAudioVolume.GetMute()
         except COMError:
             volume = None
+            muted = None
 
-        results.append(SessionInfo(pos=idx, name=name, volume=volume))
+        results.append(SessionInfo(pos=idx, name=name, volume=volume, muted=muted))
     return results
 
 def list_sessions_verbose(list_pos: bool = False) -> List[Tuple[str, SessionInfo]]:
@@ -74,7 +79,6 @@ def list_sessions_verbose(list_pos: bool = False) -> List[Tuple[str, SessionInfo
         results_formatted.append([f"{prefix}{name}: {vol_str}", s])
 
     return results_formatted
-
 
 
 def get_volume_by_name(app_name: str) -> List[VolumeResult]:
@@ -165,81 +169,6 @@ def _set_volume_by_name(app_name: str, volume: float, all_matches: bool) -> List
 
     return [VolumeResult(name=app_name, error=VolumeError.NOT_FOUND)]  # Application not found
 
-
-def interactive_set_volume() -> VolumeResult:
-    """Prompt user to pick a session and set its volume."""
-    sessions = list_sessions_verbose(list_pos=True)
-    for session_formated, session_info in sessions:
-        print(session_formated)
-    try:
-        pos = int(input("Select device by position: "))
-        volume = input("Select desired volume 0-100: ")
-    except ValueError:
-        return VolumeResult(error=VolumeError.INVALID_INPUT)  # Invalid input
-
-    if pos < 0 or pos >= len(sessions):
-        return VolumeResult(error=VolumeError.INVALID_POSITION)  # Invalid device position
-
-    if volume is None:
-        return VolumeResult(error=VolumeError.INVALID_INPUT)  # Invalid volume
-
-    result = set_volume_by_name(sessions[pos][1].name, volume)
-    if result.error:
-        return result
-
-    return VolumeResult(volume=result.volume, name=result.name)
-
-
-def _normalize_volume(volume: str | float | int) -> Optional[float]:
-    """
-    Normalize a volume value to [0.0, 1.0].
-
-    Args:
-        volume: Can be:
-            - int (0–100): will be scaled down
-            - float (0.0–1.0): clamped
-            - str: either "0–100" (int) or "0.0–1.0" (float)
-
-    Returns:
-        Normalized volume in [0.0, 1.0], or None if invalid.
-    """
-    if isinstance(volume,bool):
-        return None # explicitly reject booleans, True would end as 0.01 volume
-
-    def clamp(v: float) -> float:
-        return max(0.0, min(v, 1.0))
-
-    if isinstance(volume, float):
-        return clamp(volume)
-
-    if isinstance(volume, int):
-        return clamp(volume / 100.0)
-
-    def _try_parse_int_or_float(value: str) -> Optional[float]:
-        try:
-            return int(value) / 100.0
-        except ValueError:
-            try:
-                return float(value)
-            except ValueError:
-                return None
-
-    if isinstance(volume, str):
-        parsed = _try_parse_int_or_float(volume)
-        if parsed is not None:
-            return clamp(parsed)
-        else:
-            return None
-
-    return None
-
-def _string_parse(value: str) -> str | None:
-    if not isinstance(value, str):
-        return None
-
-    stripped = value.strip()
-    return stripped if stripped else None
-
 def toggle_volume(app_name: str) -> List[VolumeResult]:
     """
     If there are multiple sessions and just one of them is unmuted, all will be muted.
@@ -279,6 +208,29 @@ def toggle_volume(app_name: str) -> List[VolumeResult]:
 
     return results
 
+def interactive_set_volume() -> List[VolumeResult]:
+    """Prompt user to pick a session and set its volume."""
+    sessions = list_sessions_verbose(list_pos=True)
+    for session_formated, session_info in sessions:
+        print(session_formated)
+    try:
+        pos = int(input("Select device by position: "))
+        volume = input("Select desired volume 0-100: ")
+    except ValueError:
+        return [VolumeResult(error=VolumeError.INVALID_INPUT)]  # Invalid input
 
-result = toggle_volume("steam.exe")
-print(result)
+    if pos < 0 or pos >= len(sessions):
+        return [VolumeResult(error=VolumeError.INVALID_POSITION)]  # Invalid device position
+
+    if volume is None:
+        return [VolumeResult(error=VolumeError.INVALID_INPUT)]  # Invalid volume
+
+    result = set_volume_by_name(sessions[pos][1].name, volume)
+
+    if any(not i.error for i in result):
+        return result
+    else:
+        return [VolumeResult(name=sessions[pos][1].name, error=VolumeError.NOT_FOUND)]
+
+if __name__ == "__main__":
+    interactive_set_volume()

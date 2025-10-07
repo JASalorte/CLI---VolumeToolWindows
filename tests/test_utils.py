@@ -1,3 +1,5 @@
+import pytest
+
 from audio_tool import core
 
 class TestNormalizeVolume:
@@ -27,3 +29,17 @@ class TestNormalizeVolume:
         assert core._normalize_volume(False) is None
         assert core._normalize_volume([]) is None
         assert core._normalize_volume({}) is None
+
+class TestStringParser:
+    """Covers core._string_parse under normal and error conditions."""
+
+    @pytest.mark.parametrize("input_val,expected", [
+        (None, None),
+        (123, None),
+        ("", None),
+        ("   ", None),
+        ("Discord.exe", "Discord.exe"),
+        ("  Discord.exe  ", "Discord.exe"),
+    ])
+    def test_string_parse(self, input_val, expected):
+        assert core._string_parse(input_val) == expected
