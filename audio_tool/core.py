@@ -211,11 +211,11 @@ def toggle_volume(app_name: str) -> List[VolumeResult]:
 def interactive_set_volume() -> List[VolumeResult]:
     """Prompt user to pick a session and set its volume."""
     sessions = list_sessions_verbose(list_pos=True)
-    for session_formated, session_info in sessions:
-        print(session_formated)
+    for session_formatted, session_info in sessions:
+        print(session_formatted)
     try:
         pos = int(input("Select device by position: "))
-        volume = input("Select desired volume 0-100: ")
+        volume = float(input("Select desired volume 0-100: "))
     except ValueError:
         return [VolumeResult(error=VolumeError.INVALID_INPUT)]  # Invalid input
 
@@ -225,12 +225,7 @@ def interactive_set_volume() -> List[VolumeResult]:
     if volume is None:
         return [VolumeResult(error=VolumeError.INVALID_INPUT)]  # Invalid volume
 
-    result = set_volume_by_name(sessions[pos][1].name, volume)
-
-    if any(not i.error for i in result):
-        return result
-    else:
-        return [VolumeResult(name=sessions[pos][1].name, error=VolumeError.NOT_FOUND)]
+    return set_volume_by_name(sessions[pos][1].name, volume)
 
 if __name__ == "__main__":
     interactive_set_volume()
