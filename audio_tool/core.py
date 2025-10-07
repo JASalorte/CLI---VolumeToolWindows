@@ -214,8 +214,12 @@ def interactive_set_volume() -> List[VolumeResult]:
     for session_formatted, session_info in sessions:
         print(session_formatted)
     try:
-        pos = int(input("Select device by position: "))
-        volume = float(input("Select desired volume 0-100: "))
+        pos_input = input("Select device by position: ")
+        volume_input = input("Select desired volume 0-100: ")
+        if volume_input is None or pos_input is None:
+            raise ValueError("No correct input")
+        volume = float(volume_input)
+        pos = int(pos_input)
     except ValueError:
         return [VolumeResult(error=VolumeError.INVALID_INPUT)]  # Invalid input
 
