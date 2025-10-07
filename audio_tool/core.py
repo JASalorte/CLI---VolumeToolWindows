@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Tuple
 from comtypes import COMError
+from pycaw import pycaw
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 
 
@@ -15,6 +16,7 @@ class VolumeError(Enum):
 @dataclass
 class VolumeResult:
     volume: Optional[float] = None
+    muted: Optional[bool] = None
     name: Optional[str] = None
     error: Optional[VolumeError] = None
 
@@ -102,8 +104,10 @@ def get_volume_by_name(app_name: str) -> List[VolumeResult]:
     results = []
     for selected_session, resolved_name in selected:
         try:
-            volume = selected_session._ctl.QueryInterface(ISimpleAudioVolume).GetMasterVolume()
-            results.append(VolumeResult(volume=volume, name=resolved_name))
+            ctl = selected_session._ctl.QueryInterface(ISimpleAudioVolume)
+            volume = ctl.GetMasterVolume()
+            muted = ctl.GetMute()
+            results.append(VolumeResult(volume=volume, name=resolved_name, muted=bool(muted)))
         except COMError:
             results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
 
@@ -229,15 +233,40 @@ def _normalize_volume(volume: str | float | int) -> Optional[float]:
     return None
 
 
-def toggle_volume(app_name: str) -> VolumeResult:
-    """Toggle an app between mute (0) and full (1)."""
-    volume_data = get_volume_by_name(app_name)
+def toggle_volume(app_name: str) -> List[VolumeResult]:
+    sessions = get_sessions()
 
-    if volume_data.error:
-        return volume_data
+    if not isinstance(app_name, str):
+        try:
+            failed_app_name = str(app_name)
+        except Exception:
+            failed_app_name = "Undefined"
+        return [VolumeResult(name=failed_app_name, error=VolumeError.INVALID_INPUT)]
 
-    new_vol = 0.0 if volume_data.volume > 0.0 else 1.0
-    return set_volume_by_name(app_name, new_vol)
+    selected = []
+    for session in sessions:
+        proc_name = session.Process.name() if session.Process else None
+        if proc_name and proc_name.lower() == app_name.lower():
+            selected.append((session, proc_name))
+        elif not session.Process and app_name.lower() == "system sounds":
+            selected.append((session, "System sounds"))
+
+    if not selected:
+        return [VolumeResult(name=app_name, error=VolumeError.NOT_FOUND)]
+
+    results = []
+    for session, resolved_name in selected:
+        try:
+            ctl = session._ctl.QueryInterface(ISimpleAudioVolume)
+            mute = ctl.GetMute()
+            new_mute = 1 if mute == 0 else 0
+            ctl.SetMute(new_mute, None)
+            results.append(VolumeResult(name=resolved_name, muted=bool(new_mute)))
+        except COMError:
+            results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
+
+    return results
 
 
-
+result = toggle_volume("steam.exe")
+print(result)
