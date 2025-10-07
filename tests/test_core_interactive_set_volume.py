@@ -30,5 +30,5 @@ def test_interactive_set_volume(monkeypatch, mocker, inputs, sessions, expected)
     # Replace input() with our predefined sequence
     monkeypatch.setattr(builtins, "input", lambda _: inputs.pop(0))
 
-    result = core.interactive_set_volume()
+    result = core._interactive_set_volume()
     assert result == expected

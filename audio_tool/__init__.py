@@ -7,7 +7,7 @@ from .core import (
     list_sessions_verbose,
     get_volume_by_name,
     set_volume_by_name,
-    interactive_set_volume,
+    _interactive_set_volume,
 )
 
 __all__ = [
@@ -17,5 +17,5 @@ __all__ = [
     "list_sessions_verbose",
     "get_volume_by_name",
     "set_volume_by_name",
-    "interactive_set_volume",
+    "_interactive_set_volume",
 ]
