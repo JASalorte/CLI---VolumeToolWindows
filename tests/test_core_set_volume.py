@@ -16,10 +16,10 @@ class TestSetVolumeByName:
         fake_session1 = mock_session()
         fake_session2 = mock_session()
 
-        mock_interface1 = fake_session1._ctl.QueryInterface.return_value
+        mock_interface1 = fake_session1.SimpleAudioVolume
         mock_interface1.SetMasterVolume.return_value = None
 
-        mock_interface2 = fake_session2._ctl.QueryInterface.return_value
+        mock_interface2 = fake_session2.SimpleAudioVolume
         mock_interface2.SetMasterVolume.return_value = None
 
         mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session1, fake_session2])
@@ -28,8 +28,8 @@ class TestSetVolumeByName:
         result_multiple = set_volume_by_name("discord.exe", 30, True)
 
         mock_norm.assert_called_with(30)
-        fake_session1._ctl.QueryInterface.return_value.SetMasterVolume.assert_called_once_with(0.3, None)
-        fake_session2._ctl.QueryInterface.return_value.SetMasterVolume.assert_called_once_with(0.3, None)
+        fake_session1.SimpleAudioVolume.SetMasterVolume.assert_called_once_with(0.3, None)
+        fake_session2.SimpleAudioVolume.SetMasterVolume.assert_called_once_with(0.3, None)
         assert result_multiple[0] == VolumeResult(volume=0.3, name="Discord.exe")
         assert result_multiple[1] == VolumeResult(volume=0.3, name="Discord.exe")
 
@@ -82,7 +82,7 @@ class TestSetVolumeByName:
     )
     def test_set_volume_by_name_parametrized(self, mocker, mock_session, app_name, query_name, expected_name):
         fake_session = mock_session(app_name)
-        mock_interface = fake_session._ctl.QueryInterface.return_value
+        mock_interface = fake_session.SimpleAudioVolume
         mock_interface.SetMasterVolume.return_value = None
 
         mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
@@ -122,7 +122,7 @@ class TestSetVolumeByName:
         fake_session = mocker.MagicMock()
         fake_session.Process = None  # System Sounds case
 
-        mock_interface = fake_session._ctl.QueryInterface.return_value
+        mock_interface = fake_session.SimpleAudioVolume
         mock_interface.SetMasterVolume.side_effect = side_effect
 
         mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
@@ -194,7 +194,7 @@ class TestSetVolumeByName:
         fake_session = mocker.MagicMock()
         fake_session.Process.name.return_value = session_name
 
-        mock_interface = fake_session._ctl.QueryInterface.return_value
+        mock_interface = fake_session.SimpleAudioVolume
         mock_interface.SetMasterVolume.side_effect = side_effect
 
         mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
@@ -221,11 +221,11 @@ class TestSetVolumeByName:
         # Create two independent fake sessions
         fake_session1 = mocker.MagicMock()
         fake_session1.Process.name.return_value = "Discord.exe"
-        mock_interface1 = fake_session1._ctl.QueryInterface.return_value
+        mock_interface1 = fake_session1.SimpleAudioVolume
 
         fake_session2 = mocker.MagicMock()
         fake_session2.Process.name.return_value = "Discord.exe"
-        mock_interface2 = fake_session2._ctl.QueryInterface.return_value
+        mock_interface2 = fake_session2.SimpleAudioVolume
 
         # Patch get_sessions to return both
         mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session1, fake_session2])

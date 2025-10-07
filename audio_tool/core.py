@@ -2,7 +2,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Tuple
 from comtypes import COMError
-from pycaw import pycaw
 from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
 
 
@@ -48,7 +47,7 @@ def list_sessions() -> List[SessionInfo]:
             name = "System Sounds"
 
         try:
-            volume = session._ctl.QueryInterface(ISimpleAudioVolume).GetMasterVolume()
+            volume = session.SimpleAudioVolume.GetMasterVolume()
         except COMError:
             volume = None
 
@@ -104,9 +103,9 @@ def get_volume_by_name(app_name: str) -> List[VolumeResult]:
     results = []
     for selected_session, resolved_name in selected:
         try:
-            ctl = selected_session._ctl.QueryInterface(ISimpleAudioVolume)
-            volume = ctl.GetMasterVolume()
-            muted = ctl.GetMute()
+            interface = selected_session.SimpleAudioVolume
+            volume = interface.GetMasterVolume()
+            muted = interface.GetMute()
             results.append(VolumeResult(volume=volume, name=resolved_name, muted=bool(muted)))
         except COMError:
             results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
@@ -156,7 +155,7 @@ def _set_volume_by_name(app_name: str, volume: float, all_matches: bool) -> List
         results = []
         for selected_session, resolved_name in selected:
             try:
-                selected_session._ctl.QueryInterface(ISimpleAudioVolume).SetMasterVolume(volume, None)
+                selected_session.SimpleAudioVolume.SetMasterVolume(volume, None)
                 results.append(VolumeResult(volume=volume, name=resolved_name))
             except COMError:
                 results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
@@ -236,6 +235,8 @@ def _normalize_volume(volume: str | float | int) -> Optional[float]:
 def toggle_volume(app_name: str) -> List[VolumeResult]:
     sessions = get_sessions()
 
+
+
     if not isinstance(app_name, str):
         try:
             failed_app_name = str(app_name)
@@ -256,11 +257,11 @@ def toggle_volume(app_name: str) -> List[VolumeResult]:
 
     results = []
     for session, resolved_name in selected:
+        interface = session.SimpleAudioVolume
         try:
-            ctl = session._ctl.QueryInterface(ISimpleAudioVolume)
-            mute = ctl.GetMute()
+            mute = interface.GetMute()
             new_mute = 1 if mute == 0 else 0
-            ctl.SetMute(new_mute, None)
+            interface.SetMute(new_mute, None)
             results.append(VolumeResult(name=resolved_name, muted=bool(new_mute)))
         except COMError:
             results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
