@@ -1,4 +1,3 @@
-#region Test get_volume_by_name()
 import pytest
 from _ctypes import COMError
 
