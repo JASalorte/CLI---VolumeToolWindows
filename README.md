@@ -1,4 +1,7 @@
 # CLI---WindowsVolumeTool
+
+[![Tests](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/tests.yml/badge.svg)](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/tests.yml)
+
 Audio Tool for Windows
 
 A simple Python utility to list, inspect, and control the volume and mute status of applications and system sounds on Windows via the Windows Core Audio APIs.
