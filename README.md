@@ -10,7 +10,7 @@ A simple Python utility to list, inspect, and control the volume and mute status
 - Adjust or mute "System Sounds" separately from app sessions
 - Provides a clean CLI interface and is covered with a robust pytest suite for quality assurance
 
-## Quick usage
+## Usage
 
 ```bash
 # List active audio sessions
@@ -27,6 +27,17 @@ python -m audio_tool set "Discord.exe" 0.5
 python -m audio_tool toggle "Discord.exe"
 ```
 
+## Quick Install
+
+```bash
+git clone https://github.com/<your-username>/audio_tool.git
+cd CLI---WindowsVolumeTool
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python -m audio_tool list
+```
+
 ## Tests
 
 All tests are written with pytest.
@@ -34,7 +45,8 @@ They cover input parsing, command handling, and error cases through extensive mo
 
 To run the full suite:
 ```bash
-pytest -v
+cd ../CLI---WindowsVolumeTool
+python -m pytest -v
 ```
 
 See in the [tests](tests/) directory.
