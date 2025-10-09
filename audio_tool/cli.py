@@ -35,7 +35,7 @@ def main():
 
     match args.command:
         case "list":
-            for session in list_sessions_verbose():
+            for session, _ in list_sessions_verbose():
                 print(session)
         case "select":
             sessions = list_sessions_verbose(list_pos=True)
