@@ -30,7 +30,7 @@ python -m audio_tool toggle "Discord.exe"
 ## Quick Install
 
 ```bash
-git clone https://github.com/<your-username>/audio_tool.git
+git clone https://github.com/JASalorte/CLI---VolumeToolWindows.git
 cd CLI---WindowsVolumeTool
 python -m venv .venv
 .venv\Scripts\activate
