@@ -1,15 +1,42 @@
 # CLI---WindowsVolumeTool
 Audio Tool for Windows
-A Python utility to list, inspect, and control the volume of applications and system sounds on Windows via the Windows Core Audio APIs.
 
-Features:
+A simple Python utility to list, inspect, and control the volume and mute status of applications and system sounds on Windows via the Windows Core Audio APIs.
 
-List active audio sessions with process names and current volume levels
+## Features
 
-Set the volume for specific applications (case-insensitive matching)
+- List active audio sessions with process names and current volume levels
+- Set the volume for specific applications (case-insensitive matching)
+- Adjust or mute "System Sounds" separately from app sessions
+- Provides a clean CLI interface and is covered with a robust pytest suite for quality assurance
 
-Adjust or mute "System Sounds" separately from app sessions
+## Quick usage
 
-Provides a clean CLI interface and is covered with a robust pytest suite for quality assurance
+```bash
+# List active audio sessions
+python -m audio_tool list
+
+# Interactively select one and set volume
+python -m audio_tool select
+
+# Set volume directly by name
+python -m audio_tool set "Discord.exe" 50
+python -m audio_tool set "Discord.exe" 0.5
+
+# Toggle mute
+python -m audio_tool toggle "Discord.exe"
+```
+
+## Tests
+
+All tests are written with pytest.
+They cover input parsing, command handling, and error cases through extensive mocking.
+
+To run the full suite:
+```bash
+pytest -v
+```
+
+See in the [tests](tests/) directory.
 
 This project is designed as both a practical tool and a learning resource for software testing (mocking, parametrized tests, and QA practices).
