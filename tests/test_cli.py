@@ -4,6 +4,11 @@ import pytest
 from audio_tool import cli, SessionInfo, VolumeResult
 from audio_tool.core import VolumeError
 
+def run_cli(mocker, capsys, args):
+    mocker.patch("sys.argv", ["audio_tool"] + args)
+    cli.main()
+    return capsys.readouterr()
+
 def test_list_command(mocker, capsys):
     """Ensure `list` prints the formatted session list."""
     mocker.patch("audio_tool.core.list_sessions", return_value = [
@@ -11,9 +16,7 @@ def test_list_command(mocker, capsys):
         (SessionInfo(pos=1,name="Spotify.exe",muted=False,volume=0.5))
     ])
 
-    mocker.patch("sys.argv", ["audio_tool", "list"])
-    cli.main()
-    out = capsys.readouterr()
+    out = run_cli(mocker, capsys, ["list"])
 
     out_text = out.out
     assert "Discord.exe: 1.0" in out_text
@@ -80,9 +83,7 @@ def test_select_command_params(mocker, monkeypatch, capsys, params, assert1, ass
     fake_session.Process.name.return_value = "Discord.exe"
     mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
 
-    mocker.patch("sys.argv", ["audio_tool", "select"])
-    cli.main()
-    out = capsys.readouterr()
+    out = run_cli(mocker, capsys, ["select"])
 
     out_text = out.out
     assert assert1 in out_text
@@ -98,9 +99,7 @@ def test_set_command_success(mocker, capsys):
     # Spy on the real function so we can assert it was called properly
     spy = mocker.spy(cli, "set_volume_by_name")
 
-    mocker.patch("sys.argv", ["audio_tool"] + ["set", "Discord.exe", "60"])
-    cli.main()
-    out = capsys.readouterr()
+    out = run_cli(mocker, capsys, ["set", "Discord.exe", "60"])
 
     spy.assert_called_once_with("Discord.exe", "60")
     assert "Discord.exe" in out.out
@@ -116,10 +115,9 @@ def test_set_command_error(mocker, capsys):
     # Spy on the real function so we can assert it was called properly
     spy = mocker.spy(cli, "set_volume_by_name")
 
-    mocker.patch("sys.argv", ["audio_tool"] + ["set", "Discord.exe", "60"])
-    cli.main()
-    out = capsys.readouterr()
+    out = run_cli(mocker, capsys, ["set", "Discord.exe", "60"])
 
+    spy.assert_called_once_with("Discord.exe", "60")
     assert "Application not found" in out.out
 
 
@@ -128,9 +126,7 @@ def test_toggle_command_success(mocker, capsys):
     fake_result = [VolumeResult(name = "Discord.exe", muted = True)]
     mocker.patch("audio_tool.cli.toggle_volume").return_value = fake_result
 
-    mocker.patch("sys.argv", ["audio_tool"] + ["toggle", "Discord.exe"])
-    cli.main()
-    out = capsys.readouterr()
+    out = run_cli(mocker, capsys, ["toggle", "Discord.exe"])
 
     assert "Discord.exe is now muted" in out.out
 
@@ -140,9 +136,7 @@ def test_toggle_command_error(mocker, capsys):
     fake_result = [VolumeResult(error=VolumeError.NOT_FOUND)]
     mocker.patch("audio_tool.cli.toggle_volume").return_value = fake_result
 
-    mocker.patch("sys.argv", ["audio_tool"] + ["toggle", "We wont find this app"])
-    cli.main()
-    out = capsys.readouterr()
+    out = run_cli(mocker, capsys, ["toggle", "We wont find this app"])
 
     assert "Application not found" in out.out
 
@@ -153,9 +147,7 @@ def test_cdda_command(mocker, capsys):
     mocker_iface = mocker.patch("audio_tool.cli.toggle_volume")
     mocker_iface.return_value = fake_result
 
-    mocker.patch("sys.argv", ["audio_tool"] + ["cdda"])
-    cli.main()
-    out = capsys.readouterr()
+    out = run_cli(mocker, capsys, ["cdda"])
 
     mocker_iface.assert_called_once_with("cataclysm-tiles.exe")
     assert "CDDA is now muted" in out.out
