@@ -2,6 +2,7 @@
 
 [![Tests](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/tests.yml/badge.svg)](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/tests.yml)
 [![Lint](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/lint.yml/badge.svg)](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/lint.yml)
+[![Coverage Status](https://coveralls.io/repos/github/JASalorte/CLI---VolumeToolWindows/badge.svg?branch=main)](https://coveralls.io/github/JASalorte/CLI---VolumeToolWindows?branch=main)
 
 Audio Tool for Windows
 
