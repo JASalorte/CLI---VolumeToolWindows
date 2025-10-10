@@ -1,4 +1,5 @@
 import pytest
+from _ctypes import COMError
 
 from audio_tool import core, VolumeResult
 from audio_tool.core import VolumeError
@@ -14,7 +15,7 @@ class TestToggleVolumeValidation:
         ids=[
             "Empty string",
             "None as input",
-            "Integrer as input",
+            "Integer as input",
             "String only with spaces",
             "Input as an empty list",
             "Input as an empty dictionary",
@@ -74,3 +75,21 @@ class TestToggleVolumeLogic:
                 s.SimpleAudioVolume.SetMute.assert_called_once()
 
         assert result == result_expected
+
+
+    def test_toggle_volume_com_error(self, mocker):
+        fake_sessions = mocker.Mock()
+        fake_sessions.Process.name.return_value = "Discord.exe"
+
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_sessions])
+
+        fake_sessions.SimpleAudioVolume.GetMute.return_value = 0
+
+        mock_interface = fake_sessions.SimpleAudioVolume
+        mock_interface.SetMute.side_effect = COMError(42, "Unspecified error", None)
+
+        result = core.toggle_volume("discord.exe")
+
+        mock_interface.SetMute.assert_called_once_with(1, None)
+
+        assert result == [VolumeResult(name="Discord.exe", error=VolumeError.FAILED)]
