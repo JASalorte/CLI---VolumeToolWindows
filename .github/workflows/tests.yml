@@ -47,6 +47,7 @@ jobs:
         name: pytest-report
         path: report.html
     - name: Deploy HTML report to GitHub Pages
+      if: matrix.python == '3.10'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
