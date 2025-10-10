@@ -151,4 +151,3 @@ def test_cdda_command(mocker, capsys):
 
     mocker_iface.assert_called_once_with("cataclysm-tiles.exe")
     assert "CDDA is now muted" in out.out
-    

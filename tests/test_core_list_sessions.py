@@ -1,9 +1,24 @@
-from audio_tool import core
+from audio_tool import core, SessionInfo
 from tests.conftest import fake_sessions_standard, fake_sessions_none, fake_sessions_large, fake_sessions_duplicate, \
     fake_sessions_unexpected
 
 class TestListSessions:
     """Covers core.list_sessions_verbose under normal and error conditions."""
+
+    def test_list_sessions_base_func(self, mocker):
+        fake_session = mocker.Mock()
+        fake_session.Process.name.return_value = "Discord.exe"
+
+        mock_interface = fake_session.SimpleAudioVolume
+        mock_interface.GetMasterVolume.return_value = 0.65
+        mock_interface.GetMute.return_value = 0
+
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
+
+        result = core.list_sessions()
+
+        assert result == [SessionInfo(pos=0, name="Discord.exe", volume=0.65, muted=False)]
+
 
     def test_list_sessions_standard(self, mocker):
 
