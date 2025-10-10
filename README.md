@@ -1,6 +1,7 @@
 # CLI---WindowsVolumeTool
 
 [![Tests](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/tests.yml/badge.svg)](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/tests.yml)
+[![Lint](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/lint.yml/badge.svg)](https://github.com/JASalorte/CLI---VolumeToolWindows/actions/workflows/lint.yml)
 
 Audio Tool for Windows
 
