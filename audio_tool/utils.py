@@ -44,7 +44,7 @@ def _normalize_volume(volume: Union[str, float, int]) -> Optional[float]:
 
     return None
 
-def _string_parse(value: str) -> str | None:
+def _string_parse(value: str) -> Union[str, None]:
     if not isinstance(value, str):
         return None
 
