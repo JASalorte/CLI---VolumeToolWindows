@@ -54,6 +54,6 @@ cd ../CLI---WindowsVolumeTool
 python -m pytest -v
 ```
 
-See in the [tests](tests/) directory.
+See them in the [tests](tests/) directory.
 
 This project is designed as both a practical tool and a learning resource for software testing (mocking, parametrized tests, and QA practices).
