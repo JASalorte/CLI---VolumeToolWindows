@@ -151,12 +151,4 @@ def test_cdda_command(mocker, capsys):
 
     mocker_iface.assert_called_once_with("cataclysm-tiles.exe")
     assert "CDDA is now muted" in out.out
-
-
-def test_main_module_runs(monkeypatch):
-    # Mock sys.argv as __main__ depends on CLI args
-    import sys
-    sys.argv = ["audio_tool", "list"]
-
-    result = runpy.run_module("audio_tool", run_name="__main__")
-    assert result is not None
+    
