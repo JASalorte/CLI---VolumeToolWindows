@@ -5,6 +5,9 @@ name: Tests
 
 on: [push, pull_request]
 
+permissions:
+  contents: write
+
 jobs:
   linter:
     runs-on: windows-2022
