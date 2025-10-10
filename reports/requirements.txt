@@ -1,0 +1,4 @@
+pytest
+comtypes
+pycaw
+pytest-mock
