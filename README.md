@@ -45,8 +45,12 @@ python -m audio_tool list
 
 ## Tests
 
-All tests are written with pytest.
-They cover input parsing, command handling, and error cases through extensive mocking.
+This project includes a comprehensive pytest suite (76 tests total) covering:
+- CLI command behavior
+- Core volume manipulation logic
+- Utility functions
+
+Tests run automatically via GitHub Actions on Windows with Python versions from 3.8 to 3.12.
 
 To run the full suite:
 ```bash
