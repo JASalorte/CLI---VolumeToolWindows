@@ -45,7 +45,7 @@ python -m audio_tool list
 
 ## Tests
 
-This project includes a comprehensive pytest suite (76 tests total) covering:
+This project includes a comprehensive pytest suite (77 tests total) covering:
 - CLI command behavior
 - Core volume manipulation logic
 - Utility functions
