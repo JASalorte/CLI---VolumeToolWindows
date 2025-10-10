@@ -78,7 +78,5 @@ def main():
                 mute_status = "muted" if r.muted else "unmuted"
                 print(f"CDDA is now {mute_status}.")
 
-
-
 if __name__ == "__main__":
     main()

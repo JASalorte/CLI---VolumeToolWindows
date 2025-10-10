@@ -37,6 +37,7 @@ def _get_sessions():
     """Retrieve all current audio sessions, raw from the library."""
     return AudioUtilities.GetAllSessions()
 
+
 def list_sessions() -> List[SessionInfo]:
     """
     Returns:
@@ -61,6 +62,7 @@ def list_sessions() -> List[SessionInfo]:
 
         results.append(SessionInfo(pos=idx, name=name, volume=volume, muted=muted))
     return results
+
 
 def list_sessions_verbose(list_pos: bool = False) -> List[Tuple[str, SessionInfo]]:
     """
@@ -104,7 +106,7 @@ def get_volume_by_name(app_name: str) -> List[VolumeResult]:
     for session in sessions:
         proc_name = session.Process.name() if session.Process else None
         if proc_name and proc_name.lower() == app_name.lower():
-            selected.append((session,proc_name))
+            selected.append((session, proc_name))
         elif not session.Process and "system sounds" == app_name.lower():
             selected.append((session, "System sounds"))
 
@@ -122,6 +124,7 @@ def get_volume_by_name(app_name: str) -> List[VolumeResult]:
             results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
 
     return results
+
 
 def set_volume_by_name(app_name: str, volume: Union[float, int, str], all_matches: bool = True) \
         -> List[VolumeResult]:
@@ -141,6 +144,7 @@ def set_volume_by_name(app_name: str, volume: Union[float, int, str], all_matche
         return [VolumeResult(name=app_name, error=VolumeError.INVALID_INPUT)]
 
     return _set_volume_by_name(app_name, volume, all_matches)
+
 
 def _set_volume_by_name(app_name: str, volume: float, all_matches: bool) -> List[VolumeResult]:
     """Set volume(s) by name. Returns a list of VolumeResult, one per matching session."""
@@ -174,6 +178,7 @@ def _set_volume_by_name(app_name: str, volume: float, all_matches: bool) -> List
         return results
 
     return [VolumeResult(name=app_name, error=VolumeError.NOT_FOUND)]  # Application not found
+
 
 def toggle_volume(app_name: str) -> List[VolumeResult]:
     """
@@ -213,6 +218,7 @@ def toggle_volume(app_name: str) -> List[VolumeResult]:
             results.append(VolumeResult(name=resolved_name, error=VolumeError.FAILED))
 
     return results
+
 
 def _interactive_set_volume(sessions: List[SessionInfo]) -> List[VolumeResult]:
     """Prompt user to pick a session and set its volume."""

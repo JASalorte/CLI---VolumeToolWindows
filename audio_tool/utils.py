@@ -14,8 +14,8 @@ def _normalize_volume(volume: Union[str, float, int]) -> Optional[float]:
     Returns:
         Normalized volume in [0.0, 1.0], or None if invalid.
     """
-    if isinstance(volume,bool):
-        return None # explicitly reject booleans, True would end as 0.01 volume
+    if isinstance(volume, bool):
+        return None  # Explicitly reject booleans, True would end as 0.01 volume
 
     def clamp(v: float) -> float:
         return max(0.0, min(v, 1.0))
@@ -42,6 +42,7 @@ def _normalize_volume(volume: Union[str, float, int]) -> Optional[float]:
         return None
 
     return None
+
 
 def _string_parse(value: str) -> Union[str, None]:
     if not isinstance(value, str):
