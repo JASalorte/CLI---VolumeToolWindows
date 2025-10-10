@@ -1,5 +1,5 @@
-import builtins
-from unittest import mock
+import runpy
+
 import pytest
 from audio_tool import cli, SessionInfo, VolumeResult
 from audio_tool.core import VolumeError
@@ -22,7 +22,6 @@ def test_list_command(mocker, capsys):
     assert "Discord.exe: 1.0" in out_text
     assert "Spotify.exe: 0.5" in out_text
 
-@pytest.mark.integration
 @pytest.mark.parametrize(
         "params, assert1, assert2",
         [
@@ -152,3 +151,12 @@ def test_cdda_command(mocker, capsys):
 
     mocker_iface.assert_called_once_with("cataclysm-tiles.exe")
     assert "CDDA is now muted" in out.out
+
+
+def test_main_module_runs(monkeypatch):
+    # Mock sys.argv as __main__ depends on CLI args
+    import sys
+    sys.argv = ["audio_tool", "list"]
+
+    result = runpy.run_module("audio_tool", run_name="__main__")
+    assert result is not None
