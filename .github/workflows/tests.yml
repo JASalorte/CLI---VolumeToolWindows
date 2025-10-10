@@ -43,6 +43,7 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         path-to-lcov: ./coverage.xml
     - name: Upload test report
+      if: matrix.python == '3.10'
       uses: actions/upload-artifact@v4
       with:
         name: pytest-report
