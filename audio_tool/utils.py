@@ -1,12 +1,13 @@
-from typing import Optional
+from typing import Optional, Union
 
-def _normalize_volume(volume: str | float | int) -> Optional[float]:
+
+def _normalize_volume(volume: Union[str, float, int]) -> Optional[float]:
     """
     Normalize a volume value to [0.0, 1.0].
 
     Args:
         volume: Can be:
-            - int (0–100): will be scaled down
+            - int (0–100): will be scaled down to 0.0 - 1.0
             - float (0.0–1.0): clamped
             - str: either "0–100" (int) or "0.0–1.0" (float)
 

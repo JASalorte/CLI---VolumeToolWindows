@@ -15,7 +15,7 @@ class TestGetVolumeByName:
         mock_interface.GetMasterVolume.return_value = 0.5
         mock_interface.GetMute.return_value = 0
 
-        mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
         assert get_volume_by_name("discord.exe") == [VolumeResult(volume=0.5,muted=False,name='Discord.exe')]
         assert get_volume_by_name(None) == [VolumeResult(error=VolumeError.INVALID_INPUT, name="None")]
@@ -33,7 +33,7 @@ class TestGetVolumeByName:
         mock_interface.GetMasterVolume.return_value = 0.5
         mock_interface.GetMute.return_value = 0
 
-        mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
         result = core.get_volume_by_name("system sounds")
 
@@ -50,7 +50,7 @@ class TestGetVolumeByName:
         mock_interface = fake_session.SimpleAudioVolume
         mock_interface.GetMasterVolume.side_effect = COMError(42, "Unspecified error", None)
 
-        mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
         result = core.get_volume_by_name("System sounds")
 
@@ -71,7 +71,7 @@ class TestGetVolumeByName:
         fake_session2.SimpleAudioVolume.GetMasterVolume.return_value = 0.8
         fake_session2.SimpleAudioVolume.GetMute.return_value = 0
 
-        mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session1, fake_session2])
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session1, fake_session2])
 
         result = core.get_volume_by_name("Discord.exe")
 
@@ -127,7 +127,7 @@ class TestGetVolumeByName:
         mock_interface.GetMasterVolume.return_value = 0.65
         mock_interface.GetMute.return_value = 0
 
-        mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
         result = core.get_volume_by_name(query)
 
@@ -140,7 +140,7 @@ class TestGetVolumeByName:
         mock_interface = fake_session.SimpleAudioVolume
         mock_interface.GetMasterVolume.side_effect = COMError(42, "Unspecified error", None)
 
-        mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
         result = core.get_volume_by_name("Discord.exe")
 
@@ -149,7 +149,7 @@ class TestGetVolumeByName:
     def test_get_volume_by_name_process_name_none(self, mocker):
         fake_session = mocker.MagicMock()
         fake_session.Process.name.return_value = None
-        mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
         result = core.get_volume_by_name("Discord.exe")
 

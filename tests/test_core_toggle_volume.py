@@ -18,7 +18,7 @@ class TestToggleVolumeValidation:
 
     def test_toggle_volume_ignores_whitespace(self, mocker, mock_session):
         fake = mock_session("Discord.exe")
-        mocker.patch("audio_tool.core.get_sessions", return_value=[fake])
+        mocker.patch("audio_tool.core._get_sessions", return_value=[fake])
         fake.SimpleAudioVolume.GetMute.return_value = 0
 
         result = core.toggle_volume("   discord.exe   ")
@@ -55,7 +55,7 @@ class TestToggleVolumeLogic:
             s.SimpleAudioVolume.GetMute.return_value = mute
             fake_sessions.append(s)
 
-        mocker.patch("audio_tool.core.get_sessions", return_value=fake_sessions)
+        mocker.patch("audio_tool.core._get_sessions", return_value=fake_sessions)
 
         result = core.toggle_volume("discord.exe")
 

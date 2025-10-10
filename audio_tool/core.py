@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 from comtypes import COMError
-from pycaw.pycaw import AudioUtilities, ISimpleAudioVolume
+from pycaw.pycaw import AudioUtilities
 
 from audio_tool.utils import _string_parse, _normalize_volume
 
@@ -30,16 +30,16 @@ class SessionInfo:
     volume: Optional[float]
 
 
-def get_sessions():
-    """Retrieve all current audio sessions."""
+def _get_sessions():
+    """Retrieve all current audio sessions, raw from the library."""
     return AudioUtilities.GetAllSessions()
 
 def list_sessions() -> List[SessionInfo]:
     """
     Returns:
-        List[SessionInfo]: List of audio sessions with position, name, and volume.
+        List[SessionInfo]: List of audio sessions with position, name, volume and mute status.
     """
-    sessions = get_sessions()
+    sessions = _get_sessions()
     results = []
 
     for idx, session in enumerate(sessions):
@@ -95,7 +95,7 @@ def get_volume_by_name(app_name: str) -> List[VolumeResult]:
 
     app_name = parsed
 
-    sessions = get_sessions()
+    sessions = _get_sessions()
     selected = []
     for session in sessions:
         proc_name = session.Process.name() if session.Process else None
@@ -119,14 +119,14 @@ def get_volume_by_name(app_name: str) -> List[VolumeResult]:
 
     return results
 
-def set_volume_by_name(app_name: str, volume: float | int | str, all_matches: bool = True) -> List[VolumeResult]:
+def set_volume_by_name(app_name: str, volume: Union[float, int, str], all_matches: bool = True) -> List[VolumeResult]:
     """
     Set the volume of an app by process name.
 
     Args:
         app_name: Name of the app to change its name
-        volume: The desired volume
-        all_matches: Change the volume for all matches found, if False, only the first found (which is kinda useless?)
+        volume: The desired volume (will be normalized)
+        all_matches: Change the volume for all matches found, if False, only the first found (which is kinda useless for the user?)
     Returns:
         List of VolumeResult with the results of the operation
     """
@@ -144,7 +144,7 @@ def _set_volume_by_name(app_name: str, volume: float, all_matches: bool) -> List
 
     app_name = parsed
 
-    sessions = get_sessions()
+    sessions = _get_sessions()
     selected = []
 
     for session in sessions:
@@ -180,7 +180,7 @@ def toggle_volume(app_name: str) -> List[VolumeResult]:
 
     app_name = parsed
 
-    sessions = get_sessions()
+    sessions = _get_sessions()
 
     selected = []
     for session in sessions:
@@ -210,7 +210,6 @@ def toggle_volume(app_name: str) -> List[VolumeResult]:
 
 def _interactive_set_volume(sessions: List[SessionInfo]) -> List[VolumeResult]:
     """Prompt user to pick a session and set its volume."""
-
     try:
         pos_input = input("Select device by position: ")
         volume = input("Select desired volume 0-100: ")
@@ -226,11 +225,3 @@ def _interactive_set_volume(sessions: List[SessionInfo]) -> List[VolumeResult]:
     if volume is None:
         return [VolumeResult(error=VolumeError.INVALID_INPUT)]  # Invalid volume
     return set_volume_by_name(sessions[pos].name, volume)
-
-# if __name__ == "__main__":
-#     sessions = list_sessions_verbose(list_pos=True)
-#     sessions_print, sessions_raw = zip(*sessions)
-#
-#     for session_formatted in sessions_print:
-#         print(session_formatted)
-#     print(_interactive_set_volume(sessions_raw))

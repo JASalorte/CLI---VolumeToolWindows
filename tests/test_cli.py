@@ -22,6 +22,7 @@ def test_list_command(mocker, capsys):
     assert "Discord.exe: 1.0" in out_text
     assert "Spotify.exe: 0.5" in out_text
 
+@pytest.mark.integration
 @pytest.mark.parametrize(
         "params, assert1, assert2",
         [
@@ -81,7 +82,7 @@ def test_select_command_params(mocker, monkeypatch, capsys, params, assert1, ass
 
     fake_session = mocker.MagicMock()
     fake_session.Process.name.return_value = "Discord.exe"
-    mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+    mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
     out = run_cli(mocker, capsys, ["select"])
 
@@ -94,7 +95,7 @@ def test_set_command_success(mocker, capsys):
     """Ensure `set` calls set_volume_by_name and prints success."""
     fake_session = mocker.MagicMock()
     fake_session.Process.name.return_value = "Discord.exe"
-    mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+    mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
     # Spy on the real function so we can assert it was called properly
     spy = mocker.spy(cli, "set_volume_by_name")
@@ -110,7 +111,7 @@ def test_set_command_error(mocker, capsys):
     """Test `set` when it returns an error."""
     fake_session = mocker.MagicMock()
     fake_session.Process.name.return_value = "Spotify.exe"
-    mocker.patch("audio_tool.core.get_sessions", return_value=[fake_session])
+    mocker.patch("audio_tool.core._get_sessions", return_value=[fake_session])
 
     # Spy on the real function so we can assert it was called properly
     spy = mocker.spy(cli, "set_volume_by_name")
