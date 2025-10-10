@@ -33,13 +33,23 @@ class TestNormalizeVolume:
 class TestStringParser:
     """Covers core._string_parse under normal and error conditions."""
 
-    @pytest.mark.parametrize("input_val,expected", [
+    @pytest.mark.parametrize(
+        "input_val,expected",
+    [
         (None, None),
         (123, None),
         ("", None),
         ("   ", None),
         ("Discord.exe", "Discord.exe"),
         ("  Discord.exe  ", "Discord.exe"),
-    ])
-    def test_string_parse(self, input_val, expected):
+    ], ids=[
+            "Input None",
+            "Input integer",
+            "Input empty string",
+            "Input string only with spaces",
+            "Correct input exact match",
+            "Correct input with trailing spaces",
+        ]
+    )
+    def test_string_parse_input_params(self, input_val, expected):
         assert core._string_parse(input_val) == expected

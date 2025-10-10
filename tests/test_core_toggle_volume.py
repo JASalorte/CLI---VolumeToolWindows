@@ -10,6 +10,16 @@ class TestToggleVolumeValidation:
         "invalid_input",
         [
             "", None, 123, "   ", [], {}, object()
+        ],
+        ids=[
+            "Empty string",
+            "None as input",
+            "Integrer as input",
+            "String only with spaces",
+            "Input as an empty list",
+            "Input as an empty dictionary",
+            "Input as an empty object",
+
         ]
     )
     def test_toggle_volume_invalid_input_returns_error(self, invalid_input):

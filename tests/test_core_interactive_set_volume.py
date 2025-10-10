@@ -18,7 +18,12 @@ from audio_tool.core import VolumeResult, VolumeError, SessionInfo
 
         # Valid selection, set_volume_by_name success
         (["0", "50"], [("0 - Discord.exe: 1.00", SessionInfo(pos=0, name="Discord.exe", volume=1.0,muted=False))], [VolumeResult(name="Discord.exe", volume=0.5)]),
-    ],
+    ], ids= [
+        "Invalid position input (non-integer)",
+        "Position out of range",
+        "volume is None",
+        "Valid selection, set_volume_by_name success",
+    ]
 )
 def test_interactive_set_volume(monkeypatch, mocker, inputs, sessions, expected):
     # Mock list_sessions_verbose to return your fake sessions
