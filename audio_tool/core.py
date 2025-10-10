@@ -8,6 +8,7 @@ from audio_tool.utils import _string_parse, _normalize_volume
 
 
 class VolumeError(Enum):
+    """Enum with the possible errors raised by the audio tool."""
     NOT_FOUND = "Application not found"
     INVALID_INPUT = "Invalid input"
     INVALID_POSITION = "Invalid device position"
@@ -16,6 +17,7 @@ class VolumeError(Enum):
 
 @dataclass
 class VolumeResult:
+    """Class used as return for most functions in this library"""
     volume: Optional[float] = None
     muted: Optional[bool] = None
     name: Optional[str] = None
@@ -24,6 +26,7 @@ class VolumeResult:
 
 @dataclass
 class SessionInfo:
+    """Class representing a formatted session info"""
     pos: int
     name: str
     muted: bool
@@ -67,7 +70,8 @@ def list_sessions_verbose(list_pos: bool = False) -> List[Tuple[str, SessionInfo
         list_pos: Include positional index.
 
     Returns:
-        List[Tuple[str, SessionInfo]]: Each entry contains a formatted string and its raw SessionInfo.
+        List[Tuple[str, SessionInfo]]:
+        Each entry contains a formatted string and its raw SessionInfo.
     """
     results = list_sessions()
     results_formatted = []
@@ -119,14 +123,16 @@ def get_volume_by_name(app_name: str) -> List[VolumeResult]:
 
     return results
 
-def set_volume_by_name(app_name: str, volume: Union[float, int, str], all_matches: bool = True) -> List[VolumeResult]:
+def set_volume_by_name(app_name: str, volume: Union[float, int, str], all_matches: bool = True) \
+        -> List[VolumeResult]:
     """
     Set the volume of an app by process name.
 
     Args:
         app_name: Name of the app to change its name
         volume: The desired volume (will be normalized)
-        all_matches: Change the volume for all matches found, if False, only the first found (which is kinda useless for the user?)
+        all_matches: Change the volume for all matches found, if False,
+                     only the first found (which is kinda useless for the user?)
     Returns:
         List of VolumeResult with the results of the operation
     """
@@ -150,9 +156,9 @@ def _set_volume_by_name(app_name: str, volume: float, all_matches: bool) -> List
     for session in sessions:
         proc_name = session.Process.name() if session.Process else None
         if proc_name and proc_name.lower() == app_name.lower():
-                selected.append((session, proc_name))
+            selected.append((session, proc_name))
         elif not session.Process and app_name.lower() == "system sounds":
-                selected.append((session, "System sounds"))
+            selected.append((session, "System sounds"))
 
         if selected and not all_matches:
             break
@@ -223,5 +229,5 @@ def _interactive_set_volume(sessions: List[SessionInfo]) -> List[VolumeResult]:
         return [VolumeResult(error=VolumeError.INVALID_POSITION)]  # Invalid device position
 
     if volume is None:
-        return [VolumeResult(error=VolumeError.INVALID_INPUT)]  # Invalid volume
+        return [VolumeResult(error=VolumeError.INVALID_INPUT)]
     return set_volume_by_name(sessions[pos].name, volume)

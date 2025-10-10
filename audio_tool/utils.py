@@ -39,8 +39,7 @@ def _normalize_volume(volume: Union[str, float, int]) -> Optional[float]:
         parsed = _try_parse_int_or_float(volume)
         if parsed is not None:
             return clamp(parsed)
-        else:
-            return None
+        return None
 
     return None
 

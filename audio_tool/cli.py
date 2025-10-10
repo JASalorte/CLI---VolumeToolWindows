@@ -9,6 +9,7 @@ from audio_tool.core import (
 
 
 def main():
+    """main function"""
     parser = argparse.ArgumentParser(description="Control application volumes on Windows")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -17,7 +18,8 @@ def main():
     subparsers.add_parser("list", help="List all audio applications active")
 
     # select
-    subparsers.add_parser("select", help="Interactively select an application and change its volume")
+    subparsers.add_parser("select",
+                          help="Interactively select an application and change its volume")
 
     # set
     set_parser = subparsers.add_parser("set", help="Set volume for an application")
@@ -34,13 +36,12 @@ def main():
     args = parser.parse_args()
 
     if args.command == "list":
-            for session, _ in list_sessions_verbose():
-                print(session)
+        for session, _ in list_sessions_verbose():
+            print(session)
     elif args.command == "select":
         sessions = list_sessions_verbose(list_pos=True)
         if not sessions:
             print("No audio sessions found.")
-            pass
 
         sessions_print, sessions_raw = zip(*sessions)
         for session_formatted in sessions_print:
