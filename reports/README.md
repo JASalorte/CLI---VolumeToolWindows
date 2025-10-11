@@ -45,12 +45,15 @@ python -m audio_tool list
 
 ## Tests
 
-This project includes a comprehensive pytest suite (77 tests total) covering:
+This project includes a comprehensive pytest suite (78 tests total) covering:
 - CLI command behavior
 - Core volume manipulation logic
 - Utility functions
 
 Tests run automatically via GitHub Actions on Windows with Python versions from 3.8 to 3.12.
+
+[View Test Report](https://jasalorte.github.io/CLI---VolumeToolWindows/reports/report.html?sort=result)
+(It updates automatically on every push)
 
 To run the full suite:
 ```bash
